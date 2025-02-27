@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Personal Dashboard & TODO",
+  "version": "1.0",
+  "description": "The chrome new tab dashboard for prioritizing TODO tasks, ensuring reminders every time you open a new tab.",
+  "permissions": [
+    "storage",
+    "contextMenus",
+    "tabs"
+  ],
+  "chrome_url_overrides": {
+    "newtab": "dashboard.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": ["contentScript.js"]
+  }],
+  "icons": {
+    "16": "icons/dev-dashboard-ext-16x16.png",
+    "48": "icons/dev-dashboard-ext-48x48.png",
+    "128": "icons/dev-dashboard-ext-128x128.png"
+  }
+}

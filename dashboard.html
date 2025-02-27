@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="w-full h-screen grid grid-cols-12 gap-4" style="min-width: 1060px;">
+        <!-- Profile Section -->
+        <div class="profile-section col-span-3 px-4 gradient-animation relative">
+            <button id="editProfile" class="top-1 right-1 p-2 hover:bg-black/5 rounded-full border-0 bg-transparent z-10" style="position: absolute !important;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                    <path d="m15 5 4 4"/>
+                </svg>
+            </button>
+            <dialog id="editProfileDialog" class="modal">
+                <div class="dialog-backdrop fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+                    <div class="edit-form bg-white/90 p-6 w-96 flex flex-col gap-4 relative">
+                        <h2 class="text-xl font-semibold">Edit Profile</h2>
+                        <input type="text" id="nameInput" class="input h-10" placeholder="Enter your name">
+                        <input type="date" id="birthdateInput" class="input h-10" placeholder="Enter your birthdate">
+                        <div class="flex gap-2">
+                            <button id="saveProfile" class="button-primary flex-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                                    <polyline points="17 21 17 13 7 13 7 21"/>
+                                    <polyline points="7 3 7 8 15 8"/>
+                                </svg>
+                                Save Profile
+                            </button>
+                            <button id="cancelProfile" class="button-secondary flex-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M18 6 6 18"/>
+                                    <path d="m6 6 12 12"/>
+                                </svg>
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </dialog>
+            <div class="flex justify-center mb-4 mt-4">
+                <h1 id="userName" class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 text-transparent bg-clip-text text-center leading-snug">Your Name</h1>
+            </div>
+            <div class="age-counter bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-lg border border-purple-100">
+                <p class="text-lg mb-2">Age</p>
+                <div class="font-mono text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 text-transparent bg-clip-text mb-2">
+                    <span id="userAge">0.00000000</span>
+                </div>
+                <small id="birthdate" class="text-gray-500"></small>
+            </div>
+        </div>
+
+        <!-- TODO Section -->
+        <div class="todo-section col-span-9 overflow-y-auto h-screen">
+            <div class="todo-header">
+                <h2>TODO Priority Tasks</h2>
+                <button id="addTodo" class="button-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 5v14"/>
+                        <path d="M5 12h14"/>
+                    </svg>
+                    Add Task
+                </button>
+            </div>
+            <dialog id="todoFormDialog" class="modal">
+                <div class="dialog-backdrop fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+                    <div class="todo-form bg-white/90 p-6 w-96 flex flex-col gap-4 relative">
+                        <h2 class="text-xl font-semibold">Add Task</h2>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-sm font-medium">Title</label>
+                            <input type="text" id="todoTitle" class="input h-10" placeholder="Enter title...">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-sm font-medium">Description</label>
+                            <textarea id="todoDescription" class="input min-h-[100px] p-2" placeholder="Enter description..."></textarea>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-sm font-medium">Link (optional)</label>
+                            <input type="url" id="todoLink" class="input h-10" placeholder="https://...">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-sm font-medium">Priority</label>
+                            <select id="todoPriority" class="input h-10">
+                                <option value="" disabled selected>Select priority...</option>
+                                <option value="URGENT">Urgent</option>
+                                <option value="NORMAL">Normal</option>
+                                <option value="PENDING">Pending</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-sm font-medium">Deadline</label>
+                            <input type="datetime-local" id="todoDeadline" class="input h-10">
+                        </div>
+                        <div class="flex gap-2">
+                            <button id="saveTodo" class="button-primary flex-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                                    <polyline points="17 21 17 13 7 13 7 21"/>
+                                    <polyline points="7 3 7 8 15 8"/>
+                                </svg>
+                                Save Task
+                            </button>
+                            <button id="cancelTodo" class="button-secondary flex-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M18 6 6 18"/>
+                                    <path d="m6 6 12 12"/>
+                                </svg>
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </dialog>
+            <div id="todoList" class="todo-list">
+                <div class="todo-item">
+                    <div class="todo-details">
+                        <h3>Task Title</h3>
+                        <div class="flex items-center gap-2">
+                            <p class="text-sm text-gray-600">Priority: Urgent</p>
+                            <p class="text-sm text-gray-600">Deadline: 2024-05-15</p>
+                            <a href="#" class="link-icon hidden">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                    <polyline points="15 3 21 3 21 9"/>
+                                    <line x1="10" y1="14" x2="21" y2="3"/>
+                                </svg>
+                            </a>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-2 description"></p>
+                    </div>
+                    <div class="todo-actions">
+                        <button class="button-secondary" data-id="1">
+                            <svg>...</svg>
+                            Edit
+                        </button>
+                        <button class="button-destructive" data-id="1">
+                            <svg>...</svg>
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="toast" class="toast"></div>
+    <script src="dashboard.js"></script>
+</body>
+</html>
