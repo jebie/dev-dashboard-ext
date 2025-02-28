@@ -8,7 +8,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   } else if (message.type === "SHOW_TODO_DIALOG") {
     // First check if a todo with this link already exists
-    chrome.storage.sync.get(["todos"], (result) => {
+    chrome.storage.local.get(["todos"], (result) => {
       const todos = result.todos || [];
       const existingTodo = todos.find((todo) => todo.link === message.data.link);
 

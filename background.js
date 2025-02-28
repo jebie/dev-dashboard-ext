@@ -21,11 +21,11 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 // Listen for todo save requests from content script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "SAVE_TODO") {
-    chrome.storage.sync.get(["todos"], (result) => {
+    chrome.storage.local.get(["todos"], (result) => {
       const todos = result.todos || [];
       todos.push(message.todo);
 
-      chrome.storage.sync.set({ todos }, () => {
+      chrome.storage.local.set({ todos }, () => {
         // Update dashboard if it's open
         chrome.tabs.query({ url: chrome.runtime.getURL("dashboard.html") }, (tabs) => {
           tabs.forEach((tab) => {
@@ -39,10 +39,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     return true;
   } else if (message.type === "UPDATE_TODO") {
-    chrome.storage.sync.get(["todos"], (result) => {
+    chrome.storage.local.get(["todos"], (result) => {
       const todos = result.todos.map((todo) => (todo.id === message.todo.id ? message.todo : todo));
 
-      chrome.storage.sync.set({ todos }, () => {
+      chrome.storage.local.set({ todos }, () => {
         chrome.tabs.query({ url: chrome.runtime.getURL("dashboard.html") }, (tabs) => {
           tabs.forEach((tab) => {
             chrome.tabs.sendMessage(tab.id, {
