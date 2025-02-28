@@ -2,7 +2,7 @@
 
 Transform your new tab into a personal dashboard that keeps you focused on your priorities. Every time you open a new tab, you'll be reminded of your current tasks and their status, ensuring nothing important slips through the cracks.
 
-![Screenshot 2025-02-28 at 5 17 35 PM](https://github.com/user-attachments/assets/6f686c11-f4a6-4871-872b-75f9cdedea5c)
+![Screenshot 2025-02-28 at 7 51 00 PM](https://github.com/user-attachments/assets/336bcba1-41ee-4a0e-b14d-769b70a46b0b)
 
 ## About This Project
 
@@ -24,12 +24,23 @@ This collaborative approach between human supervision and AI assistance resulted
 - 📊 Visual status indicators
 - 🎨 Clean, modern interface
 - 🔄 Automatic task status updates
-- �� Responsive design
+- 🎨 Responsive design
+- 🏷️ Task Tags Management
 - ⏱️ Task Time Tracking
   - Track time spent on tasks
   - View task history with start/end times
   - Real-time duration counter
   - Accumulated time tracking across multiple sessions
+
+### Tags Feature
+- Create and manage custom tags with:
+  - Custom names and descriptions
+  - Color coding (50+ predefined colors)
+  - Tooltips showing tag descriptions
+- Assign multiple tags to tasks
+- Quick tag filtering and organization
+- Visual tag badges on tasks
+- Easy tag addition/removal from tasks
 
 ## Installation
 
