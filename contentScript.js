@@ -43,6 +43,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               <option value="PENDING">Pending</option>
             </select>
           </div>
+          <div class="dev-dashboard-ext-field">
+            <label class="dev-dashboard-ext-checkbox-label">
+              <input type="checkbox" id="todoStartTask" class="dev-dashboard-ext-checkbox">
+              Start timing this task immediately
+            </label>
+          </div>
           <div class="dev-dashboard-ext-actions">
             <button id="cancelBtn" class="dev-dashboard-ext-button-secondary">Cancel</button>
             <button id="saveBtn" class="dev-dashboard-ext-button-primary">Save</button>
@@ -185,6 +191,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           font-weight: 500;
           color: var(--ext-muted-foreground);
         }
+        .dev-dashboard-ext-checkbox-label {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          cursor: pointer;
+          font-size: 0.875rem;
+          color: var(--ext-foreground);
+        }
+
+        .dev-dashboard-ext-checkbox {
+          width: 1rem;
+          height: 1rem;
+          border: 1px solid var(--ext-border);
+          border-radius: 0.25rem;
+          cursor: pointer;
+        }
       `;
 
       document.head.appendChild(style);
@@ -233,6 +255,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               deadline: new Date(dialog.querySelector("#todoDeadline").value).toISOString(),
               updatedAt: new Date().toISOString(),
               createdAt: existingTodo ? existingTodo.createdAt : new Date().toISOString(),
+              startTask: dialog.querySelector("#todoStartTask").checked ? [[new Date().toISOString()]] : [],
             };
 
             // Validate deadline
