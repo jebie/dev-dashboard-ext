@@ -89,26 +89,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Todo handlers
   document.getElementById("addTodo").addEventListener("click", () => {
+    resetTodoForm();
     document.getElementById("todoFormDialog").showModal();
   });
 
   document.getElementById("saveTodo").addEventListener("click", saveTodo);
   document.getElementById("cancelTodo").addEventListener("click", () => {
-    resetTodoForm();
     document.getElementById("todoFormDialog").close();
   });
 
   // Close modal when clicking outside
   document.getElementById("todoFormDialog").addEventListener("mousedown", (e) => {
     if (e.target.classList.contains("dialog-backdrop")) {
-      resetTodoForm();
       document.getElementById("todoFormDialog").close();
     }
+  });
+
+  // Add close event listener to reset form
+  document.getElementById("todoFormDialog").addEventListener("close", () => {
+    resetTodoForm();
   });
 });
 
 function loadTodos() {
-  chrome.storage.sync.get(["todos"], (result) => {
+  chrome.storage.local.get(["todos"], (result) => {
     const todos = result.todos || [];
     const todoList = document.getElementById("todoList");
     todoList.innerHTML = "";
@@ -302,6 +306,8 @@ function resetTodoForm() {
   inputs.forEach((input) => {
     if (input.type === "datetime-local") {
       input.value = new Date().toISOString().slice(0, 16);
+    } else if (input.type === "checkbox") {
+      input.checked = false;
     } else {
       input.value = "";
     }
@@ -309,7 +315,9 @@ function resetTodoForm() {
 
   // Reset priority to default
   const priority = document.getElementById("todoPriority");
-  priority.selectedIndex = 0;
+  if (priority) {
+    priority.value = "NORMAL";
+  }
 }
 
 function saveTodo() {
@@ -324,7 +332,7 @@ function saveTodo() {
     return;
   }
 
-  chrome.storage.sync.get(["todos"], (result) => {
+  chrome.storage.local.get(["todos"], (result) => {
     const todos = result.todos || [];
     const newTodo = {
       id: Date.now().toString(),
@@ -339,7 +347,7 @@ function saveTodo() {
     };
 
     todos.push(newTodo);
-    chrome.storage.sync.set({ todos }, () => {
+    chrome.storage.local.set({ todos }, () => {
       loadTodos();
       resetTodoForm();
       document.getElementById("todoFormDialog").close();
@@ -349,9 +357,9 @@ function saveTodo() {
 }
 
 function deleteTodo(id) {
-  chrome.storage.sync.get(["todos"], (result) => {
+  chrome.storage.local.get(["todos"], (result) => {
     const todos = result.todos.filter((todo) => todo.id !== id);
-    chrome.storage.sync.set({ todos }, () => {
+    chrome.storage.local.set({ todos }, () => {
       loadTodos();
       showToast("Todo deleted successfully!");
     });
@@ -359,14 +367,14 @@ function deleteTodo(id) {
 }
 
 function updateTodoStatus(id, newStatus) {
-  chrome.storage.sync.get(["todos"], (result) => {
+  chrome.storage.local.get(["todos"], (result) => {
     const todos = result.todos.map((todo) => {
       if (todo.id === id) {
         return { ...todo, priority: newStatus, status: newStatus };
       }
       return todo;
     });
-    chrome.storage.sync.set({ todos }, () => {
+    chrome.storage.local.set({ todos }, () => {
       loadTodos();
       showToast("Todo status updated!");
     });
@@ -390,7 +398,7 @@ function startAgeCounter(birthDate) {
 }
 
 function editTodo(id) {
-  chrome.storage.sync.get(["todos"], (result) => {
+  chrome.storage.local.get(["todos"], (result) => {
     const todo = result.todos.find((t) => t.id === id);
     if (todo) {
       const dialog = document.getElementById("todoFormDialog");
@@ -406,15 +414,16 @@ function editTodo(id) {
       todoDescription.value = todo.description || "";
       todoLink.value = todo.link || "";
       todoPriority.value = todo.priority;
-      todoDeadline.value = todo.deadline.slice(0, 16); // Format datetime-local value
+      // Format the deadline to match datetime-local input format (YYYY-MM-DDThh:mm)
+      todoDeadline.value = new Date(todo.deadline).toISOString().slice(0, 16);
 
       dialog.showModal();
 
       // Remove any existing click handlers
-      saveTodoBtn.replaceWith(saveTodoBtn.cloneNode(true));
-      const newSaveBtn = document.getElementById("saveTodo");
+      const newSaveBtn = saveTodoBtn.cloneNode(true);
+      saveTodoBtn.parentNode.replaceChild(newSaveBtn, saveTodoBtn);
 
-      // Add new click handler
+      // Add new click handler for update
       newSaveBtn.addEventListener("click", () => updateTodo(id));
     }
   });
@@ -432,7 +441,7 @@ function updateTodo(id) {
     return;
   }
 
-  chrome.storage.sync.get(["todos"], (result) => {
+  chrome.storage.local.get(["todos"], (result) => {
     const todos = result.todos.map((todo) => {
       if (todo.id === id) {
         return {
@@ -449,7 +458,7 @@ function updateTodo(id) {
       return todo;
     });
 
-    chrome.storage.sync.set({ todos }, () => {
+    chrome.storage.local.set({ todos }, () => {
       loadTodos();
       document.getElementById("todoFormDialog").close();
       showToast("Todo updated successfully!");
@@ -521,7 +530,7 @@ function startDurationTimer(todoId, startTask) {
 }
 
 function toggleTaskTimer(id) {
-  chrome.storage.sync.get(["todos"], (result) => {
+  chrome.storage.local.get(["todos"], (result) => {
     const todos = result.todos.map((todo) => {
       if (todo.id === id) {
         const startTask = todo.startTask || [];
@@ -549,7 +558,7 @@ function toggleTaskTimer(id) {
       return todo;
     });
 
-    chrome.storage.sync.set({ todos }, () => {
+    chrome.storage.local.set({ todos }, () => {
       loadTodos();
       showToast("Task timer updated!");
     });
