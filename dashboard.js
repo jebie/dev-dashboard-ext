@@ -153,6 +153,7 @@ function loadTodos() {
 function createTodoElement(todo) {
   const div = document.createElement("div");
   div.className = `todo-item ${todo.priority.toLowerCase()}`;
+  div.setAttribute("data-id", todo.id);
 
   // Move the now declaration to the top since we need it in multiple places
   const now = new Date();
@@ -173,7 +174,7 @@ function createTodoElement(todo) {
         </a>
       </div>
       ${todo.description ? `<p class="text-sm text-gray-500 mt-2 description">${todo.description}</p>` : ""}
-      <div class="mt-2">
+      <div class="mt-2 flex gap-2 items-center flex-wrap">
         <button class="${
           isTaskStarted(todo.startTask) ? "button-destructive" : "button-outline"
         } start-task-btn" data-id="${todo.id}">
@@ -194,6 +195,13 @@ function createTodoElement(todo) {
               : ""
           }
         </button>
+
+        <div class="todo-tags flex gap-2 items-center flex-wrap">
+          ${renderTodoTags(todo)}
+          <button class="icon-button add-tags" title="Add Tags" data-id="${todo.id}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tags"><path d="m15 5 6.3 6.3a2.4 2.4 0 0 1 0 3.4L17 19"/><path d="M9.586 5.586A2 2 0 0 0 8.172 5H3a1 1 0 0 0-1 1v5.172a2 2 0 0 0 .586 1.414L8.29 18.29a2.426 2.426 0 0 0 3.42 0l3.58-3.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="6.5" cy="9.5" r=".5" fill="currentColor"/></svg>
+          </button>
+        </div>
       </div>
       ${
         todo.startTask && todo.startTask.length > 0
@@ -248,7 +256,8 @@ function createTodoElement(todo) {
         </svg>
         Delete
       </button>
-    </div>`;
+    </div>
+    `;
 
   if (deadline < now && todo.status !== "DONE") {
     div.classList.add("overdue");
@@ -296,6 +305,17 @@ function createTodoElement(todo) {
   if (isTaskStarted(todo.startTask)) {
     startDurationTimer(todo.id, todo.startTask);
   }
+
+  // Add event listener for add tags button
+  div.querySelector(".add-tags").addEventListener("click", (e) => {
+    const button = e.target.closest("button");
+    if (button) {
+      const todoId = button.dataset.id;
+      const tagsDialog = document.getElementById("tagsDialog");
+      loadTags(todoId);
+      tagsDialog.showModal();
+    }
+  });
 
   return div;
 }
@@ -563,4 +583,44 @@ function toggleTaskTimer(id) {
       showToast("Task timer updated!");
     });
   });
+}
+
+function renderTodoTags(todo) {
+  if (!todo.tagIds || !todo.tagIds.length) return "";
+
+  // Return empty string initially
+  const tagContainer = document.createElement("div");
+  tagContainer.className = "todo-tags-container";
+
+  // Get tags asynchronously and update the container
+  chrome.storage.local.get(["tags"], (result) => {
+    const tags = result.tags || [];
+    const tagsHtml = todo.tagIds
+      .map((tagId) => {
+        const tag = tags.find((t) => t.id === tagId);
+        if (!tag) return "";
+        return `<span class="tag-badge" style="background-color: ${tag.tagColor}" data-tooltip="${
+          tag.tagDescription || "No description"
+        }">${tag.tagName}</span>`;
+      })
+      .join("");
+
+    // Find the todo element and update its tags
+    const todoElement = document.querySelector(`[data-id="${todo.id}"]`);
+    if (todoElement) {
+      const tagsContainer = todoElement.querySelector(".todo-tags");
+      if (tagsContainer) {
+        const addTagsButton = tagsContainer.querySelector(".add-tags");
+        tagsContainer.innerHTML = tagsHtml;
+        tagsContainer.appendChild(addTagsButton);
+
+        // Add tooltips to tags
+        tagsContainer.querySelectorAll(".tag-badge").forEach((tag) => {
+          createTooltip(tag, tag.dataset.tooltip);
+        });
+      }
+    }
+  });
+
+  return ""; // Initial render will be empty, then updated asynchronously
 }

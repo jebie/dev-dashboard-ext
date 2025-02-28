@@ -59,13 +59,15 @@
         <div class="todo-section col-span-9 overflow-y-auto h-screen">
             <div class="todo-header">
                 <h2>TODO Priority Tasks</h2>
-                <button id="addTodo" class="button-primary">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 5v14"/>
-                        <path d="M5 12h14"/>
-                    </svg>
-                    Add Task
-                </button>
+                <div class="flex gap-2">
+                    <button id="addTodo" class="button-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 5v14"/>
+                            <path d="M5 12h14"/>
+                        </svg>
+                        Add Task
+                    </button>
+                </div>
             </div>
             <dialog id="todoFormDialog" class="modal">
                 <div class="dialog-backdrop fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
@@ -121,5 +123,7 @@
     </div>
     <div id="toast" class="toast"></div>
     <script src="dashboard.js"></script>
+    <script src="tags.js"></script>
+    <script src="tooltip.js"></script>
 </body>
 </html>
