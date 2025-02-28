@@ -149,12 +149,17 @@ function loadTodos() {
 function createTodoElement(todo) {
   const div = document.createElement("div");
   div.className = `todo-item ${todo.priority.toLowerCase()}`;
+
+  // Move the now declaration to the top since we need it in multiple places
+  const now = new Date();
+  const deadline = new Date(todo.deadline);
+
   div.innerHTML = `
     <div class="todo-details">
       <h2>${todo.title}</h2>
       <div class="flex items-center gap-2">
         <p class="text-sm text-gray-600">Status: ${todo.status}</p>
-        <p class="text-sm text-gray-600">Deadline: ${new Date(todo.deadline).toLocaleDateString()}</p>
+        <p class="text-sm text-gray-600">Deadline: ${deadline.toLocaleDateString()}</p>
         <a href="#" class="link-icon ${todo.link ? "" : "hidden"}">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
@@ -164,8 +169,58 @@ function createTodoElement(todo) {
         </a>
       </div>
       ${todo.description ? `<p class="text-sm text-gray-500 mt-2 description">${todo.description}</p>` : ""}
+      <div class="mt-2">
+        <button class="${
+          isTaskStarted(todo.startTask) ? "button-destructive" : "button-outline"
+        } start-task-btn" data-id="${todo.id}">
+          ${
+            isTaskStarted(todo.startTask)
+              ? `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="6" y="4" width="4" height="16"/>
+              <rect x="14" y="4" width="4" height="16"/>
+            </svg>`
+              : `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>`
+          }
+          ${isTaskStarted(todo.startTask) ? "Stop Task" : "Start Task"}
+          ${
+            calculateTaskDuration(todo.startTask)
+              ? `<span class="task-duration" data-id="${todo.id}">${calculateTaskDuration(todo.startTask)}</span>`
+              : ""
+          }
+        </button>
+      </div>
+      ${
+        todo.startTask && todo.startTask.length > 0
+          ? `
+        <div class="task-history mt-2">
+          <table class="w-full text-sm">
+            <thead>
+              <tr>
+                <th class="text-left">Start Date</th>
+                <th class="text-left">End Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${todo.startTask
+                .map(
+                  (entry) => `
+                <tr>
+                  <td>${new Date(entry[0]).toLocaleString()}</td>
+                  <td>${entry[1] ? new Date(entry[1]).toLocaleString() : "-"}</td>
+                </tr>
+              `
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </div>
+      `
+          : ""
+      }
     </div>
-    <div class="todo-actions">
+    <div class="todo-actions flex items-start gap-2">
       <select class="todo-status input h-10" data-id="${todo.id}">
         <option value="URGENT" ${todo.status === "URGENT" ? "selected" : ""}>Urgent</option>
         <option value="NORMAL" ${todo.status === "NORMAL" ? "selected" : ""}>Normal</option>
@@ -179,7 +234,7 @@ function createTodoElement(todo) {
         </svg>
         Edit
       </button>
-      <button class="button-destructive" data-id="${todo.id}">
+      <button class="button-destructive delete-task-btn" data-id="${todo.id}">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 6h18"/>
           <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
@@ -191,8 +246,6 @@ function createTodoElement(todo) {
       </button>
     </div>`;
 
-  const now = new Date();
-  const deadline = new Date(todo.deadline);
   if (deadline < now && todo.status !== "DONE") {
     div.classList.add("overdue");
   }
@@ -209,10 +262,18 @@ function createTodoElement(todo) {
     }
   });
 
-  div.querySelector(".button-destructive").addEventListener("click", (e) => {
+  div.querySelector(".delete-task-btn").addEventListener("click", (e) => {
     const button = e.target.closest("button");
     if (button && confirm("Are you sure you want to delete this task?")) {
       deleteTodo(button.dataset.id);
+    }
+  });
+
+  // Add event listener for start/stop task button
+  div.querySelector(".start-task-btn").addEventListener("click", (e) => {
+    const button = e.target.closest("button");
+    if (button) {
+      toggleTaskTimer(button.dataset.id);
     }
   });
 
@@ -225,6 +286,11 @@ function createTodoElement(todo) {
         chrome.tabs.update(tabs[0].id, { url: todo.link });
       });
     });
+  }
+
+  // Add timer update if task is started
+  if (isTaskStarted(todo.startTask)) {
+    startDurationTimer(todo.id, todo.startTask);
   }
 
   return div;
@@ -268,6 +334,7 @@ function saveTodo() {
       priority,
       deadline,
       status: priority,
+      startTask: [],
       createdAt: new Date().toISOString(),
     };
 
@@ -397,4 +464,94 @@ function showToast(message) {
   setTimeout(() => {
     toast.classList.remove("show");
   }, 3000);
+}
+
+function isTaskStarted(startTask) {
+  if (!startTask || !Array.isArray(startTask)) return false;
+  const lastEntry = startTask[startTask.length - 1];
+  return Array.isArray(lastEntry) && lastEntry.length === 1;
+}
+
+function calculateTaskDuration(startTask) {
+  if (!startTask || !Array.isArray(startTask) || startTask.length === 0) return null;
+
+  let totalMilliseconds = 0;
+  const now = new Date();
+
+  startTask.forEach((entry) => {
+    if (entry.length === 2) {
+      // Completed interval
+      totalMilliseconds += new Date(entry[1]) - new Date(entry[0]);
+    } else if (entry.length === 1) {
+      // Ongoing interval
+      totalMilliseconds += now - new Date(entry[0]);
+    }
+  });
+
+  // Convert to hours, minutes and seconds
+  const totalSeconds = Math.floor(totalMilliseconds / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds
+    .toString()
+    .padStart(2, "0")}`;
+}
+
+let durationTimers = {};
+
+function startDurationTimer(todoId, startTask) {
+  // Clear existing timer if any
+  if (durationTimers[todoId]) {
+    clearInterval(durationTimers[todoId]);
+  }
+
+  // Start new timer
+  durationTimers[todoId] = setInterval(() => {
+    const durationElement = document.querySelector(`.task-duration[data-id="${todoId}"]`);
+    if (durationElement) {
+      durationElement.textContent = calculateTaskDuration(startTask);
+    } else {
+      // Clean up timer if element no longer exists
+      clearInterval(durationTimers[todoId]);
+      delete durationTimers[todoId];
+    }
+  }, 1000);
+}
+
+function toggleTaskTimer(id) {
+  chrome.storage.sync.get(["todos"], (result) => {
+    const todos = result.todos.map((todo) => {
+      if (todo.id === id) {
+        const startTask = todo.startTask || [];
+        const now = new Date().toISOString();
+
+        if (isTaskStarted(startTask)) {
+          // Stop the task - add end time to last entry
+          startTask[startTask.length - 1].push(now);
+          // Clear the timer
+          if (durationTimers[id]) {
+            clearInterval(durationTimers[id]);
+            delete durationTimers[id];
+          }
+        } else {
+          // Start the task - add new entry with start time
+          startTask.push([now]);
+        }
+
+        return {
+          ...todo,
+          startTask,
+          updatedAt: now,
+        };
+      }
+      return todo;
+    });
+
+    chrome.storage.sync.set({ todos }, () => {
+      loadTodos();
+      showToast("Task timer updated!");
+    });
+  });
 }

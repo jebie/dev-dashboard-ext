@@ -2,6 +2,8 @@
 
 Transform your new tab into a personal dashboard that keeps you focused on your priorities. Every time you open a new tab, you'll be reminded of your current tasks and their status, ensuring nothing important slips through the cracks.
 
+![Screenshot 2025-02-28 at 5 17 35 PM](https://github.com/user-attachments/assets/6f686c11-f4a6-4871-872b-75f9cdedea5c)
+
 ## About This Project
 
 This project was primarily developed using [Cursor](https://cursor.sh/), an AI-powered code editor. As the project supervisor, I provided the requirements, feature specifications, and guidance while Cursor generated much of the implementation code. My role involved:
@@ -22,7 +24,12 @@ This collaborative approach between human supervision and AI assistance resulted
 - 📊 Visual status indicators
 - 🎨 Clean, modern interface
 - 🔄 Automatic task status updates
-- 📱 Responsive design
+- �� Responsive design
+- ⏱️ Task Time Tracking
+  - Track time spent on tasks
+  - View task history with start/end times
+  - Real-time duration counter
+  - Accumulated time tracking across multiple sessions
 
 ## Installation
 
@@ -53,6 +60,14 @@ This collaborative approach between human supervision and AI assistance resulted
      - Normal
      - Pending
      - Done
+
+4. **Track Time on Tasks**
+   - Click "Start Task" to begin tracking time
+   - Timer displays in HH:MM:SS format
+   - Click "Stop Task" to end the current session
+   - View complete history of work sessions in a table
+   - Track multiple work sessions per task
+   - Accumulated time is preserved across sessions
 
 4. **Edit or Delete Tasks**
    - Click the edit icon to modify task details

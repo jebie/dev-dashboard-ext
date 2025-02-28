@@ -382,7 +382,6 @@ body {
 .todo-item {
     display: flex;
     justify-content: space-between;
-    align-items: center;
     padding: 1rem;
     border-radius: var(--radius);
     border: 1px solid var(--border);
@@ -464,11 +463,6 @@ body {
 }
 
 /* Update todo item buttons */
-.todo-actions {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-}
 
 .edit-btn, .delete-btn {
     padding: 0.5rem 1rem;
@@ -1389,3 +1383,35 @@ body {
 .bg-white-opacity-90 { background-color: rgba(255, 255, 255, 0.9); }
 .bg-white-opacity-95 { background-color: rgba(255, 255, 255, 0.95); }
 .bg-white-opacity-100 { background-color: rgba(255, 255, 255, 1); }
+
+.task-duration {
+    margin-left: 8px;
+    font-family: monospace;
+}
+
+.task-history {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.task-history table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.task-history th,
+.task-history td {
+    padding: 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.task-history tr:last-child td {
+    border-bottom: none;
+}
+
+.task-history th {
+    font-weight: 500;
+    color: var(--muted-foreground);
+}
