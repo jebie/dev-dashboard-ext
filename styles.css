@@ -1394,6 +1394,8 @@ body {
     border-radius: var(--radius);
     padding: 0.5rem;
     margin-top: 0.5rem;
+    max-height: 300px;
+    overflow-y: auto;
 }
 
 .task-history table {
@@ -1414,6 +1416,23 @@ body {
 .task-history th {
     font-weight: 500;
     color: var(--muted-foreground);
+}
+
+.task-history tfoot td {
+    border-top: 1px solid var(--border);
+    font-weight: 500;
+}
+
+.task-history-dialog {
+    max-width: 500px;
+    width: 100%;
+    max-height: 80vh;
+    border-radius: 0.5rem;
+}
+
+.task-history-content {
+    max-height: 60vh;
+    overflow-y: auto;
 }
 
 /* Tags Dialog Styles */
@@ -1627,3 +1646,5 @@ body {
   height: 8px;
   background-color: var(--foreground);
 }
+
+/* Projects Section Styles have been moved to projects.css */

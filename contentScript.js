@@ -6,6 +6,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (window.location.href === chrome.runtime.getURL("dashboard.html")) {
       window.dispatchEvent(new CustomEvent("refreshTodos"));
     }
+  } else if (message.type === "REFRESH_PROJECTS") {
+    // If this is the dashboard page, refresh the projects
+    if (window.location.href === chrome.runtime.getURL("dashboard.html")) {
+      window.dispatchEvent(new CustomEvent("refreshProjects"));
+    }
   } else if (message.type === "SHOW_TODO_DIALOG") {
     // First check if a todo with this link already exists
     chrome.storage.local.get(["todos"], (result) => {

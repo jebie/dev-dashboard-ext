@@ -188,6 +188,14 @@ function loadTags(todoId = null) {
     const selectedTagIds = todo?.tagIds || [];
 
     const tagList = document.querySelector(".tag-list");
+    if (tags.length === 0) {
+      tagList.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-8 text-gray-500">
+          <p class="mt-2 text-center">Wow, such emptiness—no tags yet!</p>
+        </div>
+      `;
+      return;
+    }
     tagList.innerHTML = tags
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .map(

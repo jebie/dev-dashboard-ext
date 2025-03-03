@@ -109,6 +109,23 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("todoFormDialog").addEventListener("close", () => {
     resetTodoForm();
   });
+
+  // Task History Dialog handlers
+  const taskHistoryDialog = document.getElementById("taskHistoryDialog");
+  const closeTaskHistoryBtn = document.getElementById("closeTaskHistory");
+  
+  if (taskHistoryDialog && closeTaskHistoryBtn) {
+    closeTaskHistoryBtn.addEventListener("click", () => {
+      taskHistoryDialog.close();
+    });
+    
+    // Close modal when clicking outside
+    taskHistoryDialog.addEventListener("mousedown", (e) => {
+      if (e.target.classList.contains("dialog-backdrop")) {
+        taskHistoryDialog.close();
+      }
+    });
+  }
 });
 
 function loadTodos() {
@@ -131,7 +148,7 @@ function loadTodos() {
           <path d="M3 18h.01"/>
         </svg>
         <p class="text-lg font-medium">No tasks yet</p>
-        <p class="text-sm text-center" style="max-width: 400px;">Bravo! You've cleared your to-do list. In the realm of programming, where there's always another bug to squash and a feature to develop, achieving this is commendable. Your code has compiled, your scripts have run, and for a fleeting moment, the semicolons are all in their right places. Now, take a moment to sit back and revel in the harmony of an empty task queue. Bask in the calmness, uncluttered by pending tasks. Remember, every line of code you wrote today had a purpose and made a difference. Great work, programmer!</p>
+        <p class="text-sm text-center" style="max-width: 400px;">Bravo! You've cleared your to-do list—a rare feat in programming! Take a moment to enjoy the calm before the next bug or feature. Great job!</p>
       `;
       todoList.appendChild(emptyState);
       return;
@@ -175,6 +192,7 @@ function createTodoElement(todo) {
       </div>
       ${todo.description ? `<p class="text-sm text-gray-500 mt-2 description">${todo.description}</p>` : ""}
       <div class="mt-2 flex gap-2 items-center flex-wrap">
+        <div class="inline-flex">
         <button class="${
           isTaskStarted(todo.startTask) ? "button-destructive" : "button-outline"
         } start-task-btn" data-id="${todo.id}">
@@ -195,6 +213,21 @@ function createTodoElement(todo) {
               : ""
           }
         </button>
+        ${
+          todo.startTask && todo.startTask.length > 0
+            ? `<button class="button-outline start-time-history" data-id="${todo.id}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list">
+                  <line x1="8" y1="6" x2="21" y2="6"></line>
+                  <line x1="8" y1="12" x2="21" y2="12"></line>
+                  <line x1="8" y1="18" x2="21" y2="18"></line>
+                  <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                  <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                  <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                </svg>
+              </button>`
+            : ""
+        }
+        </div>
 
         <div class="todo-tags flex gap-2 items-center flex-wrap">
           ${renderTodoTags(todo)}
@@ -203,34 +236,6 @@ function createTodoElement(todo) {
           </button>
         </div>
       </div>
-      ${
-        todo.startTask && todo.startTask.length > 0
-          ? `
-        <div class="task-history mt-2">
-          <table class="w-full text-sm">
-            <thead>
-              <tr>
-                <th class="text-left">Start Date</th>
-                <th class="text-left">End Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${todo.startTask
-                .map(
-                  (entry) => `
-                <tr>
-                  <td>${new Date(entry[0]).toLocaleString()}</td>
-                  <td>${entry[1] ? new Date(entry[1]).toLocaleString() : "-"}</td>
-                </tr>
-              `
-                )
-                .join("")}
-            </tbody>
-          </table>
-        </div>
-      `
-          : ""
-      }
     </div>
     <div class="todo-actions flex items-start gap-2">
       <select class="todo-status input h-10" data-id="${todo.id}">
@@ -289,6 +294,17 @@ function createTodoElement(todo) {
       toggleTaskTimer(button.dataset.id);
     }
   });
+
+  // Add event listener for history button if it exists
+  const historyButton = div.querySelector(".start-time-history");
+  if (historyButton) {
+    historyButton.addEventListener("click", (e) => {
+      const button = e.target.closest("button");
+      if (button) {
+        showTaskHistory(button.dataset.id);
+      }
+    });
+  }
 
   if (todo.link) {
     const linkIcon = div.querySelector(".link-icon");
@@ -623,4 +639,101 @@ function renderTodoTags(todo) {
   });
 
   return ""; // Initial render will be empty, then updated asynchronously
+}
+
+// Listen for messages from background script
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "REFRESH_PROJECTS") {
+    loadProjects();
+  } else if (message.type === "SHOW_TOAST") {
+    showToast(message.message);
+  }
+});
+
+function showTaskHistory(todoId) {
+  chrome.storage.local.get(["todos"], (result) => {
+    const todos = result.todos || [];
+    const todo = todos.find(t => t.id === todoId);
+    
+    if (!todo || !todo.startTask || todo.startTask.length === 0) {
+      showToast("No history available for this task");
+      return;
+    }
+    
+    const taskHistoryContent = document.getElementById("taskHistoryContent");
+    const taskHistoryDialog = document.getElementById("taskHistoryDialog");
+    
+    if (!taskHistoryContent || !taskHistoryDialog) {
+      console.error("Task history elements not found");
+      return;
+    }
+    
+    // Create the history table
+    let historyHTML = `
+      <h3 class="text-lg font-medium mb-2">${todo.title}</h3>
+      <div class="task-history">
+        <table class="w-full text-sm">
+          <thead>
+            <tr>
+              <th class="text-left">Start Date</th>
+              <th class="text-left">End Date</th>
+              <th class="text-left">Duration</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    
+    // Calculate total duration
+    let totalDuration = 0;
+    
+    todo.startTask.forEach(entry => {
+      const startDate = new Date(entry[0]);
+      let endDate = entry[1] ? new Date(entry[1]) : null;
+      let duration = 0;
+      
+      if (endDate) {
+        duration = endDate - startDate;
+      } else {
+        endDate = new Date();
+        duration = endDate - startDate;
+      }
+      
+      totalDuration += duration;
+      
+      // Format duration as HH:MM:SS
+      const durationHours = Math.floor(duration / (1000 * 60 * 60));
+      const durationMinutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
+      const durationSeconds = Math.floor((duration % (1000 * 60)) / 1000);
+      const formattedDuration = `${durationHours.toString().padStart(2, '0')}:${durationMinutes.toString().padStart(2, '0')}:${durationSeconds.toString().padStart(2, '0')}`;
+      
+      historyHTML += `
+        <tr>
+          <td>${startDate.toLocaleString()}</td>
+          <td>${entry[1] ? endDate.toLocaleString() : "-"}</td>
+          <td>${formattedDuration}</td>
+        </tr>
+      `;
+    });
+    
+    // Format total duration
+    const totalHours = Math.floor(totalDuration / (1000 * 60 * 60));
+    const totalMinutes = Math.floor((totalDuration % (1000 * 60 * 60)) / (1000 * 60));
+    const totalSeconds = Math.floor((totalDuration % (1000 * 60)) / 1000);
+    const formattedTotal = `${totalHours.toString().padStart(2, '0')}:${totalMinutes.toString().padStart(2, '0')}:${totalSeconds.toString().padStart(2, '0')}`;
+    
+    historyHTML += `
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="2" class="text-right font-medium">Total:</td>
+              <td class="font-medium">${formattedTotal}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    `;
+    
+    taskHistoryContent.innerHTML = historyHTML;
+    taskHistoryDialog.showModal();
+  });
 }
