@@ -28,6 +28,10 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         title: info.selectionText || tab.title,
         link: tab.url,
       },
+    }, () => {
+      if (chrome.runtime.lastError) {
+        console.log("Could not send message to tab: ", chrome.runtime.lastError.message);
+      }
     });
   } else if (info.menuItemId === "addToProjects") {
     // Save project directly without dialog
@@ -52,7 +56,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
               type: "REFRESH_PROJECTS",
             }, () => {
               if (chrome.runtime.lastError) {
-                // Ignore errors from tabs that don't have content scripts
+                console.log("Could not send refresh message to tab: ", chrome.runtime.lastError.message);
               }
             });
           });
@@ -83,6 +87,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           tabs.forEach((tab) => {
             chrome.tabs.sendMessage(tab.id, {
               type: "REFRESH_TODOS",
+            }, () => {
+              // Suppress error if receiving end does not exist
+              if (chrome.runtime.lastError) {
+                console.log("Could not send refresh todos message: ", chrome.runtime.lastError.message);
+              }
             });
           });
         });
@@ -99,6 +108,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           tabs.forEach((tab) => {
             chrome.tabs.sendMessage(tab.id, {
               type: "REFRESH_TODOS",
+            }, () => {
+              // Suppress error if receiving end does not exist
+              if (chrome.runtime.lastError) {
+                console.log("Could not send refresh todos message: ", chrome.runtime.lastError.message);
+              }
             });
           });
         });

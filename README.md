@@ -2,7 +2,7 @@
 
 Transform your new tab into a personal dashboard that keeps you focused on your priorities. Every time you open a new tab, you'll be reminded of your current tasks and their status, ensuring nothing important slips through the cracks.
 
-![Screenshot 2025-02-28 at 7 51 00 PM](https://github.com/user-attachments/assets/336bcba1-41ee-4a0e-b14d-769b70a46b0b)
+![Screenshot 2025-02-28 at 7 51 00 PM](https://github.com/user-attachments/assets/336bcba1-41ee-4a0e-b14d-769b70a46b0b)
 
 ## About This Project
 
@@ -31,6 +31,11 @@ This collaborative approach between human supervision and AI assistance resulted
   - View task history with start/end times
   - Real-time duration counter
   - Accumulated time tracking across multiple sessions
+- 📚 Bookmark Projects
+  - Save important webpages as projects
+  - Quick access to your project links
+  - Track project usage statistics
+  - Add projects directly from any webpage
 
 ### Tags Feature
 - Create and manage custom tags with:
@@ -41,6 +46,14 @@ This collaborative approach between human supervision and AI assistance resulted
 - Quick tag filtering and organization
 - Visual tag badges on tasks
 - Easy tag addition/removal from tasks
+
+### Bookmark Projects Feature
+- Save important webpages as project bookmarks
+- Add projects directly from any webpage via context menu
+- Visually appealing project cards with hover effects
+- Track usage statistics for each project
+- Confirmation dialog when deleting projects
+- Organized in a dedicated section on your dashboard
 
 ## Installation
 
@@ -80,10 +93,28 @@ This collaborative approach between human supervision and AI assistance resulted
    - Track multiple work sessions per task
    - Accumulated time is preserved across sessions
 
-4. **Edit or Delete Tasks**
+5. **Edit or Delete Tasks**
    - Click the edit icon to modify task details
    - Click the delete icon to remove a task
    - Click the link icon to open the associated URL
+
+### Managing Bookmark Projects
+
+1. **Add a New Project**
+   - Right-click on any webpage
+   - Select "Personalized Data" > "Add Project"
+   - The project will be automatically added to your dashboard
+   - A notification will confirm the successful addition
+
+2. **Access Your Projects**
+   - All saved projects appear in the Projects section of your dashboard
+   - Click on a project title to open it in a new tab
+   - Projects track usage statistics automatically
+
+3. **Remove Projects**
+   - Click the delete icon on any project
+   - Confirm deletion when prompted
+   - The project will be permanently removed from your dashboard
 
 ### Profile Management
 
