@@ -47,7 +47,7 @@
             <div class="flex justify-center mb-4 mt-4">
                 <h1 id="userName" class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 text-transparent bg-clip-text text-center leading-snug">Your Name</h1>
             </div>
-            <div class="age-counter bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-lg border border-purple-100">
+            <div class="age-counter bg-gradient-to-br from-indigo-50 to-purple-50 p-6 border border-purple-100">
                 <p class="text-lg mb-2">Age</p>
                 <div class="font-mono text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 text-transparent bg-clip-text mb-2">
                     <span id="userAge">0.00000000</span>
@@ -58,7 +58,7 @@
             <!-- Projects Section -->
             <div class="projects-section mt-4">
                 <h2 class="text-lg font-semibold mb-2">Bookmark Projects</h2>
-                <div id="projectsList" class="projects-list max-h-64 overflow-y-auto bg-gradient-to-br from-indigo-50 to-purple-50 p-4 rounded-lg border border-purple-100">
+                <div id="projectsList" class="projects-list max-h-64 overflow-y-auto bg-gradient-to-br from-indigo-50 to-purple-50 p-4 border border-purple-100">
                     <!-- Projects will be loaded here dynamically -->
                 </div>
             </div>
@@ -69,6 +69,13 @@
             <div class="todo-header">
                 <h2>TODO Priority Tasks</h2>
                 <div class="flex gap-2">
+                    <button id="searchTodo" class="button-outline">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        Search
+                    </button>
                     <button id="addTodo" class="button-primary">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M12 5v14"/>
@@ -78,6 +85,34 @@
                     </button>
                 </div>
             </div>
+            
+            <!-- Search Form (Hidden by default) -->
+            <div id="todoSearchForm" class="search-form bg-gradient-to-br from-indigo-50 to-purple-50 p-4 border border-purple-100 mb-4 hidden" style="display: none;">
+                <div class="flex gap-2 w-full mb-4">
+                    <div class="flex-1">
+                        <input type="text" id="searchTitle" class="input h-10 w-full" placeholder="Search by title...">
+                    </div>
+                    <div class="flex-1">
+                        <select id="searchTag" class="input h-10 w-full">
+                            <option value="">Search by tag...</option>
+                            <!-- Tags will be loaded dynamically -->
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button id="resetSearch" class="button-secondary">
+                        Reset
+                    </button>
+                    <button id="performSearch" class="button-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        Search
+                    </button>
+                </div>
+            </div>
+            
             <dialog id="todoFormDialog" class="modal">
                 <div class="dialog-backdrop fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
                     <div class="todo-form bg-white/90 p-6 w-96 flex flex-col gap-4 relative">
@@ -153,6 +188,7 @@
         </div>
     </dialog>
     
+    <script src="db.js"></script>
     <script src="dashboard.js"></script>
     <script src="tags.js"></script>
     <script src="tooltip.js"></script>

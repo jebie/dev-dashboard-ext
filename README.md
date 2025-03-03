@@ -125,7 +125,28 @@ This collaborative approach between human supervision and AI assistance resulted
 
 ## Privacy
 
-All your data is stored locally in Chrome's storage sync, ensuring your tasks and personal information remain private and accessible across your Chrome instances.
+All your data is stored locally in your browser using IndexedDB, ensuring your tasks and personal information remain private. The extension does not send any data to external servers.
+
+## Technical Details
+
+### Storage Architecture
+
+This extension uses IndexedDB for data storage, providing several advantages:
+
+- **Improved Performance**: IndexedDB offers better performance for large datasets compared to Chrome's storage API
+- **Structured Data**: Object stores with indexes enable efficient querying and filtering
+- **Larger Storage Capacity**: IndexedDB supports storing significantly more data than chrome.storage.local
+- **Transaction Support**: Ensures data integrity during complex operations
+
+The database structure includes separate object stores for:
+- Tasks/TODOs
+- Projects
+- Tags
+- Profile information
+
+### Data Migration
+
+The extension automatically migrates existing data from chrome.storage.local to IndexedDB when you first load the dashboard after updating. This one-time migration ensures all your existing data is preserved while taking advantage of the improved storage system.
 
 ## Contributing
 

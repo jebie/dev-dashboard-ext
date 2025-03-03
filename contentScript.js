@@ -12,300 +12,292 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       window.dispatchEvent(new CustomEvent("refreshProjects"));
     }
   } else if (message.type === "SHOW_TODO_DIALOG") {
-    // First check if a todo with this link already exists
-    chrome.storage.local.get(["todos"], (result) => {
-      const todos = result.todos || [];
-      const existingTodo = todos.find((todo) => todo.link === message.data.link);
+    // Instead of accessing IndexedDB directly, send a message to the background script
+    chrome.runtime.sendMessage(
+      {
+        type: "CHECK_TODO_EXISTS",
+        data: { link: message.data.link },
+      },
+      function (response) {
+        const existingTodo = response && response.todo;
 
-      // Create and show dialog
-      const dialog = document.createElement("dialog");
-      dialog.className = "dev-dashboard-ext-dialog";
+        // Create and show dialog
+        const dialog = document.createElement("dialog");
+        dialog.className = "dev-dashboard-ext-dialog";
 
-      dialog.innerHTML = `
-        <div class="dev-dashboard-ext-container">
-          <h2 class="dev-dashboard-ext-title">${existingTodo ? "Update TODO" : "Add to TODO"}</h2>
-          <div class="dev-dashboard-ext-field">
-            <label class="dev-dashboard-ext-label">Title</label>
-            <input type="text" id="todoTitle" class="dev-dashboard-ext-input">
-          </div>
-          <div class="dev-dashboard-ext-field">
-            <label class="dev-dashboard-ext-label">Description</label>
-            <textarea id="todoDescription" class="dev-dashboard-ext-input dev-dashboard-ext-textarea" placeholder="Enter description..."></textarea>
-          </div>
-          <div class="dev-dashboard-ext-field">
-            <label class="dev-dashboard-ext-label">Link</label>
-            <input type="url" id="todoLink" class="dev-dashboard-ext-input">
-          </div>
-          <div class="dev-dashboard-ext-field">
-            <label class="dev-dashboard-ext-label">Deadline</label>
-            <input type="datetime-local" id="todoDeadline" class="dev-dashboard-ext-input">
-          </div>
-          <div class="dev-dashboard-ext-field">
-            <label class="dev-dashboard-ext-label">Priority</label>
-            <select id="todoPriority" class="dev-dashboard-ext-input dev-dashboard-ext-select">
-              <option value="NORMAL" selected>Normal</option>
-              <option value="URGENT">Urgent</option>
-              <option value="PENDING">Pending</option>
-            </select>
-          </div>
-          <div class="dev-dashboard-ext-field">
-            <label class="dev-dashboard-ext-checkbox-label">
-              <input type="checkbox" id="todoStartTask" class="dev-dashboard-ext-checkbox">
-              Start timing this task immediately
-            </label>
-          </div>
-          <div class="dev-dashboard-ext-actions">
-            <button id="cancelBtn" class="dev-dashboard-ext-button-secondary">Cancel</button>
-            <button id="saveBtn" class="dev-dashboard-ext-button-primary">Save</button>
-          </div>
-        </div>
-      `;
-
-      // Add styles
-      const style = document.createElement("style");
-      style.textContent = `
-        /* Scoped reset for our dialog only */
-        .dev-dashboard-ext-dialog * {
-          box-sizing: border-box;
-          margin: 0;
-          padding: 0;
-          font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-
+        // Add dialog styles
+        const dialogStyle = document.createElement("style");
+        dialogStyle.textContent = `
         .dev-dashboard-ext-dialog {
-          --ext-background: #ffffff;
-          --ext-foreground: #0f172a;
-          --ext-card: #ffffff;
-          --ext-card-foreground: #0f172a;
-          --ext-primary: hsl(222.2 47.4% 11.2%);
-          --ext-primary-foreground: #ffffff;
-          --ext-secondary: #f1f5f9;
-          --ext-secondary-foreground: #0f172a;
-          --ext-muted: #f1f5f9;
-          --ext-muted-foreground: #64748b;
-          --ext-border: #e2e8f0;
-          --ext-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-
-          border: none;
-          box-shadow: var(--ext-shadow);
-          background: var(--ext-background);
           position: fixed;
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
-          max-width: 90vw;
-          max-height: 90vh;
-          z-index: 2147483647;
-          margin: 0;
-          padding: 0;
-          padding-left: 0.5rem;
-          padding-right: 0.5rem;
+          padding: 1.5rem;
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          z-index: 10000;
+          max-width: 500px;
+          width: 90%;
+          border: 1px solid #e2e8f0;
         }
+        
         .dev-dashboard-ext-dialog::backdrop {
           background: rgba(0, 0, 0, 0.5);
-          backdrop-filter: blur(4px);
         }
-        .dev-dashboard-ext-container {
+        
+        .dev-dashboard-ext-dialog-content {
           display: flex;
           flex-direction: column;
           gap: 1rem;
-          padding: 1rem;
-          min-width: 400px;
         }
-        .dev-dashboard-ext-field {
+        
+        .dev-dashboard-ext-dialog-content h2 {
+          font-size: 1.25rem;
+          font-weight: 600;
+          margin-bottom: 0.5rem;
+          color: #1e293b;
+        }
+        
+        .dev-dashboard-ext-form-group {
           display: flex;
           flex-direction: column;
           gap: 0.5rem;
+          margin-bottom: 0.5rem;
         }
-        .dev-dashboard-ext-input {
-          border: 1px solid var(--ext-border);
+        
+        .dev-dashboard-ext-form-group.checkbox-group {
+          flex-direction: row;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 1rem;
+        }
+        
+        .dev-dashboard-ext-form-group.checkbox-group input[type="checkbox"] {
+          margin: 0;
+          width: 16px;
+          height: 16px;
+        }
+        
+        .dev-dashboard-ext-form-group.checkbox-group label {
+          margin: 0;
+          font-size: 0.875rem;
+          color: #475569;
+        }
+        
+        .dev-dashboard-ext-form-group label {
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: #475569;
+        }
+        
+        .dev-dashboard-ext-form-group input,
+        .dev-dashboard-ext-form-group textarea,
+        .dev-dashboard-ext-form-group select {
           padding: 0.5rem;
-          background: var(--ext-background);
-          color: var(--ext-foreground);
-          height: 2.5rem;
-          width: 100%;
-          outline: none;
-          transition: all 0.2s;
+          border: 1px solid #cbd5e1;
+          border-radius: 4px;
+          font-size: 0.875rem;
         }
-        .dev-dashboard-ext-input:focus {
-          border-color: var(--ext-primary);
-          box-shadow: 0 0 0 1px var(--ext-primary);
-        }
-        .dev-dashboard-ext-textarea {
-          min-height: 100px;
-          height: auto;
+        
+        .dev-dashboard-ext-form-group textarea {
+          min-height: 80px;
           resize: vertical;
         }
-        .dev-dashboard-ext-select {
-          appearance: none;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='currentColor' stroke-width='1.5'%3E%3Cpath d='M2.5 5L6 8.5L9.5 5'/%3E%3C/svg%3E");
-          background-repeat: no-repeat;
-          background-position: right 0.75rem center;
-          padding-right: 2.5rem;
+        
+        .dev-dashboard-ext-todo-info {
+          background: #f8fafc;
+          padding: 1rem;
+          border-radius: 4px;
+          margin-bottom: 1rem;
         }
-        .dev-dashboard-ext-actions {
+        
+        .dev-dashboard-ext-dialog-buttons {
           display: flex;
           justify-content: flex-end;
           gap: 0.5rem;
-          margin-top: 0.5rem;
+          margin-top: 1rem;
         }
-        .dev-dashboard-ext-button-primary {
-          background-color: var(--ext-primary);
+        
+        .dev-dashboard-ext-dialog-buttons button {
+          padding: 0.5rem 1rem;
+          border-radius: 4px;
+          font-size: 0.875rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: background-color 0.2s;
+        }
+        
+        #dev-dashboard-ext-save {
+          background-color: #2563eb;
           color: white;
-          padding: 0.5rem 1rem;
           border: none;
-          cursor: pointer;
-          transition: all 0.2s;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-weight: 500;
-          font-size: 0.875rem;
-          line-height: 1.25rem;
         }
-        .dev-dashboard-ext-button-primary:hover {
-          opacity: 0.8;
-          transform: translateY(-1px);
+        
+        #dev-dashboard-ext-save:hover {
+          background-color: #1d4ed8;
         }
-        .dev-dashboard-ext-button-secondary {
-          background-color: var(--ext-secondary);
-          color: var(--ext-secondary-foreground);
-          padding: 0.5rem 1rem;
-          border: none;
-          cursor: pointer;
-          transition: all 0.2s;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-weight: 500;
-          font-size: 0.875rem;
-          line-height: 1.25rem;
+        
+        #dev-dashboard-ext-cancel,
+        #dev-dashboard-ext-view-todo {
+          background-color: #f1f5f9;
+          color: #475569;
+          border: 1px solid #cbd5e1;
         }
-        .dev-dashboard-ext-button-secondary:hover {
-          opacity: 0.8;
-          transform: translateY(-1px);
-        }
-        .dev-dashboard-ext-title {
-          font-size: 1.25rem;
-          font-weight: 600;
-          color: var(--ext-foreground);
-          margin-bottom: 0.5rem;
-        }
-        .dev-dashboard-ext-label {
-          font-size: 0.875rem;
-          font-weight: 500;
-          color: var(--ext-muted-foreground);
-        }
-        .dev-dashboard-ext-checkbox-label {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          cursor: pointer;
-          font-size: 0.875rem;
-          color: var(--ext-foreground);
-        }
-
-        .dev-dashboard-ext-checkbox {
-          width: 1rem;
-          height: 1rem;
-          border: 1px solid var(--ext-border);
-          border-radius: 0.25rem;
-          cursor: pointer;
+        
+        #dev-dashboard-ext-cancel:hover,
+        #dev-dashboard-ext-view-todo:hover {
+          background-color: #e2e8f0;
         }
       `;
+        document.head.appendChild(dialogStyle);
 
-      document.head.appendChild(style);
-      document.body.appendChild(dialog);
+        let dialogContent = "";
 
-      // Show the dialog first
-      dialog.showModal();
-
-      // Wait for next tick to ensure DOM is ready
-      setTimeout(() => {
-        // Set the title and add event listeners AFTER adding dialog to DOM
-        const todoTitle = dialog.querySelector("#todoTitle");
-        const todoLink = dialog.querySelector("#todoLink");
-        const todoDeadline = dialog.querySelector("#todoDeadline");
-        const saveBtn = dialog.querySelector("#saveBtn");
-        const cancelBtn = dialog.querySelector("#cancelBtn");
-        const todoDescription = dialog.querySelector("#todoDescription");
-        const todoPriority = dialog.querySelector("#todoPriority");
-
-        // Fill form with existing data if found
         if (existingTodo) {
-          todoTitle.value = existingTodo.title;
-          todoDescription.value = existingTodo.description || "";
-          todoLink.value = existingTodo.link;
-          todoPriority.value = existingTodo.priority;
-          todoDeadline.value = new Date(existingTodo.deadline).toISOString().slice(0, 16);
+          // Show existing todo info
+          dialogContent = `
+          <div class="dev-dashboard-ext-dialog-content">
+            <h2>Task Already Exists</h2>
+            <p>A task with this link already exists:</p>
+            <div class="dev-dashboard-ext-todo-info">
+              <strong>${existingTodo.title}</strong>
+              <p>${existingTodo.description || "No description"}</p>
+              <p>Priority: ${existingTodo.priority}</p>
+              <p>Deadline: ${existingTodo.deadline ? new Date(existingTodo.deadline).toLocaleDateString() : "No deadline"}</p>
+            </div>
+            <div class="dev-dashboard-ext-dialog-buttons">
+              <button id="dev-dashboard-ext-view-todo">View Task</button>
+              <button id="dev-dashboard-ext-cancel">Cancel</button>
+            </div>
+          </div>
+        `;
         } else {
-          if (todoTitle) todoTitle.value = message.data.title;
-          if (todoLink) todoLink.value = message.data.link;
-          if (todoPriority) todoPriority.value = "NORMAL"; // Default priority
-          if (todoDeadline) {
-            const now = new Date();
-            todoDeadline.value = now.toISOString().slice(0, 16);
-          }
+          // Show form to create new todo
+          dialogContent = `
+          <div class="dev-dashboard-ext-dialog-content">
+            <h2>Add New Task</h2>
+            <form id="dev-dashboard-ext-todo-form">
+              <div class="dev-dashboard-ext-form-group">
+                <label for="dev-dashboard-ext-title">Title</label>
+                <input type="text" id="dev-dashboard-ext-title" value="${message.data.title || ""}" required>
+              </div>
+              <div class="dev-dashboard-ext-form-group">
+                <label for="dev-dashboard-ext-description">Description</label>
+                <textarea id="dev-dashboard-ext-description">${message.data.description || ""}</textarea>
+              </div>
+              <div class="dev-dashboard-ext-form-group">
+                <label for="dev-dashboard-ext-priority">Priority</label>
+                <select id="dev-dashboard-ext-priority" required>
+                  <option value="">Select priority...</option>
+                  <option value="URGENT">Urgent</option>
+                  <option value="NORMAL">Normal</option>
+                  <option value="PENDING">Pending</option>
+                </select>
+              </div>
+              <div class="dev-dashboard-ext-form-group">
+                <label for="dev-dashboard-ext-deadline">Deadline (Optional)</label>
+                <input type="date" id="dev-dashboard-ext-deadline">
+              </div>
+              <div class="dev-dashboard-ext-form-group checkbox-group">
+                <input type="checkbox" id="dev-dashboard-ext-start-immediately">
+                <label for="dev-dashboard-ext-start-immediately">Start task immediately after saving</label>
+              </div>
+              <input type="hidden" id="dev-dashboard-ext-link" value="${message.data.link || ""}">
+              <div class="dev-dashboard-ext-dialog-buttons">
+                <button type="submit" id="dev-dashboard-ext-save">Save Task</button>
+                <button type="button" id="dev-dashboard-ext-cancel">Cancel</button>
+              </div>
+            </form>
+          </div>
+        `;
         }
 
-        if (saveBtn) {
-          saveBtn.addEventListener("click", () => {
-            const todoData = {
-              id: existingTodo ? existingTodo.id : Date.now().toString(),
-              title: dialog.querySelector("#todoTitle").value,
-              description: dialog.querySelector("#todoDescription").value || "",
-              priority: dialog.querySelector("#todoPriority").value,
-              link: dialog.querySelector("#todoLink").value,
-              status: existingTodo ? existingTodo.status : "NORMAL",
-              deadline: new Date(dialog.querySelector("#todoDeadline").value).toISOString(),
-              updatedAt: new Date().toISOString(),
-              createdAt: existingTodo ? existingTodo.createdAt : new Date().toISOString(),
-              startTask: dialog.querySelector("#todoStartTask").checked ? [[new Date().toISOString()]] : [],
-            };
+        dialog.innerHTML = dialogContent;
+        document.body.appendChild(dialog);
+        dialog.showModal();
 
-            // Validate deadline
-            if (!todoData.deadline) {
-              showToast("Please set a valid deadline!");
+        // Add event listeners
+        const cancelBtn = dialog.querySelector("#dev-dashboard-ext-cancel");
+        cancelBtn.addEventListener("click", () => {
+          dialog.close();
+          dialog.remove();
+          document.head.removeChild(dialogStyle);
+        });
+
+        dialog.addEventListener("click", (e) => {
+          if (e.target === dialog) {
+            dialog.close();
+            dialog.remove();
+            document.head.removeChild(dialogStyle);
+          }
+        });
+
+        if (existingTodo) {
+          const viewTodoBtn = dialog.querySelector("#dev-dashboard-ext-view-todo");
+          viewTodoBtn.addEventListener("click", () => {
+            chrome.runtime.sendMessage({
+              type: "OPEN_DASHBOARD_WITH_TODO",
+              todoId: existingTodo.id,
+            });
+            dialog.close();
+            dialog.remove();
+            document.head.removeChild(dialogStyle);
+          });
+        } else {
+          const todoForm = dialog.querySelector("#dev-dashboard-ext-todo-form");
+          todoForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+
+            const title = document.getElementById("dev-dashboard-ext-title").value;
+            const description = document.getElementById("dev-dashboard-ext-description").value;
+            const priority = document.getElementById("dev-dashboard-ext-priority").value;
+            const link = document.getElementById("dev-dashboard-ext-link").value;
+            const deadlineInput = document.getElementById("dev-dashboard-ext-deadline").value;
+            const startImmediately = document.getElementById("dev-dashboard-ext-start-immediately").checked;
+
+            // Format deadline properly or set to null if not provided
+            const deadline = deadlineInput ? new Date(deadlineInput).toISOString() : null;
+
+            if (!title) {
+              showToast("Please enter a title for the task");
               return;
             }
 
+            if (!priority) {
+              showToast("Please select a priority for the task");
+              return;
+            }
+
+            // Send message to background script to save the todo
             chrome.runtime.sendMessage(
               {
-                type: existingTodo ? "UPDATE_TODO" : "SAVE_TODO",
-                todo: todoData,
+                type: "SAVE_TODO",
+                data: {
+                  title,
+                  description,
+                  priority,
+                  link,
+                  deadline,
+                  startImmediately,
+                },
               },
-              (response) => {
-                showToast(`Todo ${existingTodo ? "updated" : "added"} successfully!`);
+              function (response) {
+                if (response && response.success) {
+                  showToast("Task added successfully");
+                  dialog.close();
+                  dialog.remove();
+                  document.head.removeChild(dialogStyle);
+                } else {
+                  showToast("Error saving task. Please try again.");
+                }
               }
             );
-
-            dialog.close();
-            dialog.remove();
           });
         }
-
-        if (cancelBtn) {
-          cancelBtn.addEventListener("click", () => {
-            dialog.close();
-            dialog.remove();
-          });
-        }
-
-        // Add backdrop click handler
-        dialog.addEventListener("click", (e) => {
-          const dialogDimensions = dialog.getBoundingClientRect();
-          if (
-            e.clientX < dialogDimensions.left ||
-            e.clientX > dialogDimensions.right ||
-            e.clientY < dialogDimensions.top ||
-            e.clientY > dialogDimensions.bottom
-          ) {
-            dialog.close();
-            dialog.remove();
-          }
-        });
-      }, 0);
-    });
+      }
+    );
   }
 });
 

@@ -9,32 +9,32 @@ function showToast(message) {
   const toast = document.getElementById("toast");
   toast.textContent = message;
   toast.classList.add("show");
-  
+
   setTimeout(() => {
     toast.classList.remove("show");
   }, 3000);
 }
 
 /**
- * Load projects from storage and display them in the projects list
+ * Load projects from IndexedDB and display them in the projects list
  */
-function loadProjects() {
-  chrome.storage.local.get(["projects"], (result) => {
-    const projects = result.projects || [];
+async function loadProjects() {
+  try {
+    const projects = await db.projects.getAll();
     const projectsList = document.getElementById("projectsList");
-    
+
     if (!projectsList) {
       console.error("Projects list element not found");
       return;
     }
-    
+
     projectsList.innerHTML = "";
-    
+
     if (projects.length === 0) {
       projectsList.innerHTML = `<div class="text-gray-500 text-center py-4">No projects added yet</div>`;
       return;
     }
-    
+
     // Sort projects by noClick (descending) and then by updated date (descending)
     projects.sort((a, b) => {
       // First compare by noClick (descending)
@@ -44,12 +44,15 @@ function loadProjects() {
       // Then compare by updated timestamp (descending)
       return new Date(b.updated) - new Date(a.updated); // Newer dates first
     });
-    
-    projects.forEach(project => {
+
+    projects.forEach((project) => {
       const projectElement = createProjectElement(project);
       projectsList.appendChild(projectElement);
     });
-  });
+  } catch (error) {
+    console.error("Error loading projects:", error);
+    showToast("Failed to load projects. Please try again.");
+  }
 }
 
 /**
@@ -59,41 +62,37 @@ function loadProjects() {
  */
 function createProjectElement(project) {
   const projectElement = document.createElement("div");
-  projectElement.className = "project-item flex items-center justify-between p-2 mb-2 bg-white/80 rounded border border-purple-100 hover:bg-purple-50 transition-colors";
-  
+  projectElement.className =
+    "project-item flex items-center justify-between p-2 mb-2 bg-white/80 rounded border border-purple-100 hover:bg-purple-50 transition-colors";
+
   const contentContainer = document.createElement("div");
   contentContainer.className = "flex-1 min-w-0 mr-2";
-  
+
   const titleElement = document.createElement("a");
   titleElement.href = project.link;
   titleElement.className = "project-title block truncate text-blue-600 hover:text-blue-800";
   titleElement.textContent = project.title;
-  
+
   const linkElement = document.createElement("div");
   linkElement.className = "project-link text-xs text-gray-500 truncate";
   linkElement.textContent = project.link;
-  
+
   // Update noClick count when project is clicked
-  titleElement.addEventListener("click", () => {
-    chrome.storage.local.get(["projects"], (result) => {
-      const projects = result.projects || [];
-      const updatedProjects = projects.map(p => {
-        if (p.id === project.id) {
-          return {
-            ...p,
-            noClick: (p.noClick || 0) + 1,
-            updated: new Date().toISOString()
-          };
-        }
-        return p;
-      });
-      
-      chrome.storage.local.set({ projects: updatedProjects }, () => {
+  titleElement.addEventListener("click", async () => {
+    try {
+      const projectToUpdate = await db.projects.getById(project.id);
+      if (projectToUpdate) {
+        projectToUpdate.noClick = (projectToUpdate.noClick || 0) + 1;
+        projectToUpdate.updated = new Date().toISOString();
+
+        await db.projects.update(projectToUpdate);
         loadProjects();
-      });
-    });
+      }
+    } catch (error) {
+      console.error("Error updating project click count:", error);
+    }
   });
-  
+
   const removeButton = document.createElement("button");
   removeButton.className = "remove-project p-1 ml-2 text-gray-500 hover:text-red-500 hover:bg-red-50 border-0";
   removeButton.innerHTML = `
@@ -106,13 +105,13 @@ function createProjectElement(project) {
   removeButton.addEventListener("click", () => {
     deleteProject(project.id);
   });
-  
+
   contentContainer.appendChild(titleElement);
   contentContainer.appendChild(linkElement);
-  
+
   projectElement.appendChild(contentContainer);
   projectElement.appendChild(removeButton);
-  
+
   return projectElement;
 }
 
@@ -120,28 +119,27 @@ function createProjectElement(project) {
  * Delete a project by ID
  * @param {string} id - The project ID to delete
  */
-function deleteProject(id) {
-  chrome.storage.local.get(["projects"], (result) => {
-    const projects = result.projects || [];
-    const projectToDelete = projects.find(project => project.id === id);
-    
+async function deleteProject(id) {
+  try {
+    const projectToDelete = await db.projects.getById(id);
+
     if (!projectToDelete) {
       showToast("Project not found!");
       return;
     }
-    
+
     // Confirm before deleting
     if (!confirm(`Are you sure you want to delete the project "${projectToDelete.title}"?`)) {
       return;
     }
-    
-    const updatedProjects = projects.filter(project => project.id !== id);
-    
-    chrome.storage.local.set({ projects: updatedProjects }, () => {
-      loadProjects();
-      showToast("Project removed successfully!");
-    });
-  });
+
+    await db.projects.remove(id);
+    loadProjects();
+    showToast("Project removed successfully!");
+  } catch (error) {
+    console.error("Error deleting project:", error);
+    showToast("Failed to delete project. Please try again.");
+  }
 }
 
 /**
@@ -150,7 +148,7 @@ function deleteProject(id) {
 function initProjects() {
   // Load projects on page load
   loadProjects();
-  
+
   // Listen for refresh events
   window.addEventListener("refreshProjects", () => {
     loadProjects();
@@ -164,5 +162,5 @@ document.addEventListener("DOMContentLoaded", initProjects);
 window.projectsModule = {
   loadProjects,
   createProjectElement,
-  deleteProject
-}; 
+  deleteProject,
+};
